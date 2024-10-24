@@ -1,0 +1,21 @@
+from flask import Flask
+from tabulate import tabulate
+from random import randint
+
+app = Flask(__name__)
+
+@app.route('/')
+def bingo():
+    head = ['B', 'I', 'N', 'G', 'O']
+    sisu = [
+        [3, 1, 88, 4, 26],
+        [45, 2, 55, 19, 75],
+        [6, 10, 39, 22, 4],
+        [randint, randint, randint, randint, randint]
+    ]
+    return tabulate(sisu, headers=head, tablefmt='grid')
+
+
+
+if (__name__ == '__main__'):
+    app.run()
