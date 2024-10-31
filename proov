@@ -1,21 +1,65 @@
-from flask import Flask
-from tabulate import tabulate
-from random import randint
+from flask import Flask, render_template_string
+import random
 
 app = Flask(__name__)
 
+# Define a function to generate a Bingo card
+def generate_bingo_card():
+    card = {'B': [], 'I': [], 'N': [], 'G': [], 'O': []}
+    columns = {'B': range(1, 10), 'I': range(10, 20), 'N': range(20, 30), 'G': range(30, 40), 'O': range(40, 50)}
+
+    for letter, numbers in columns.items():
+        card[letter] = random.sample(numbers, 5)
+
+    # Center square is "Free"
+    card['N'][2] = "Free"
+    
+    return card
+
+# HTML template to render the Bingo card
+template = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meie bingo</title>
+    <style>
+        table { border-collapse: collapse; margin: 20px auto; }
+        th, td { border: 1px solid #333; padding: 15px; text-align: center; font-size: 24px; width: 70px; height: 70px; }
+        th { background-color: #e675e6; color: white; }
+        td { background-color: #f9f9f9; }
+        .center-cell img { width: 60px; height: 60px; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Bingo!</h1>
+    <table>
+        <tr>
+            <th>B</th><th>I</th><th>N</th><th>G</th><th>O</th>
+        </tr>
+        {% for i in range(5) %}
+        <tr>
+            {% for j in range(5) %}
+            {% if i == 2 and j == 2 %}
+            <td class="center-cell"><img src="{{ url_for('static', filename='taht.jpg') }}" alt="Täheke"</td>
+            {% else %}
+            <td>{{ item }}</td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+'''
+
 @app.route('/')
 def bingo():
-    head = ['B', 'I', 'N', 'G', 'O']
-    sisu = [
-        [3, 1, 88, 4, 26],
-        [45, 2, 55, 19, 75],
-        [6, 10, 39, 22, 4],
-        [randint, randint, randint, randint, randint]
-    ]
-    return tabulate(sisu, headers=head, tablefmt='grid')
+    card = generate_bingo_card()
+    # Transpose the card to display in rows
+    rows = [[card[letter][i] for letter in 'BINGO'] for i in range(5)]
+    return render_template_string(template, rows=rows)
 
-
-
-if (__name__ == '__main__'):
-    app.run()
+if __name__ == '__main__':
+    app.run(debug=True)
