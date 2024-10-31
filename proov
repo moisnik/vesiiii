@@ -26,7 +26,7 @@ template = '''
     <title>Meie bingo</title>
     <style>
         table { border-collapse: collapse; margin: 20px auto; }
-        th, td { border: 1px solid #333; padding: 15px; text-align: center; font-size: 24px; width: 70px; height: 70px; }
+        th, td { border: 1px solid #333; padding: 15px; text-align: center; font-size: 24px; width: 70px; height: 70px; font-family: Arial, Helvetica, sans-serif}
         th { background-color: #e675e6; color: white; }
         td { background-color: #f9f9f9; }
         .center-cell img { width: 60px; height: 60px; }
@@ -42,9 +42,9 @@ template = '''
         <tr>
             {% for j in range(5) %}
             {% if i == 2 and j == 2 %}
-            <td class="center-cell"><img src="{{ url_for('static', filename='taht.jpg') }}" alt="Täheke"</td>
+            <td class="center-cell"><img src="{{ url_for('static', filename='taht.jpg') }}" alt="Täheke"></td>
             {% else %}
-            <td>{{ item }}</td>
+            <td>{{ rows[i][j] }}</td>
             {% endif %}
             {% endfor %}
         </tr>
@@ -63,3 +63,4 @@ def bingo():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
