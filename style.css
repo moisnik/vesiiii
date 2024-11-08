@@ -1,0 +1,28 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+#startScreen {
+    margin-top: 50px;
+}
+
+#gameArea {
+    display: none;
+}
+
+#bingoCard table {
+    margin: 20px auto;
+    border-collapse: collapse;
+}
+
+#bingoCard td {
+    padding: 20px;
+    border: 1px solid #ddd;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+}
