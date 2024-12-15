@@ -5,6 +5,7 @@ import pygame.freetype
 from pygame.sprite import Sprite
 import pygame.rect
 from enum import Enum
+import random
 
 hele_roosa=(245,148,148)
 tume_roosa=(238,125,125)
@@ -127,16 +128,14 @@ def vali_ikoon(screen):
         play.draw(screen)
         pygame.display.flip()
 
-def bingo_ruudud(bingo_numbrid):
-    bingo_uid=[]
-    for rida in bingo_numbrid:
-        for number in rida:
-            numbri_ruut=UIElement((x,y),number,10,must)
+
+        
 
 
 def bingo_ekraan(screen):
     pealkiri=UIElement(asetus= (400, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
     kaardi_taust=(100,80,600,500)
+    bingokaart_numbrid=bingokaart()
     
     while True:
         mouse_up=False
@@ -147,6 +146,15 @@ def bingo_ekraan(screen):
         screen.fill(hele_roosa)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
         pealkiri.draw(screen)
+        x=120
+        y=100
+        for rida in bingokaart_numbrid:
+            for number in rida:
+                numbri_ruut=UIElement((x,y),number,40,valge,must, action=None)
+                numbri_ruut.draw(screen)
+                x+=120
+            y+=100
+     
         pygame.display.flip()
         
 def bingokaart():
