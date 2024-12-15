@@ -1,0 +1,95 @@
+import pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Screen setup
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Clickable Grid Example")
+
+# Colors
+HELE_ROOSA = (255, 182, 193)
+VALGE = (255, 255, 255)
+TUME_ROOSA = (255, 105, 180)
+MUST = (0, 0, 0)
+
+# Fonts
+pygame.font.init()
+
+# Custom UIElement Class
+class UIElement:
+    def __init__(self, asetus, fondi_suurus, taustavärv, teksti_värv, tekst, action=None):
+        self.x, self.y = asetus
+        self.tekst = str(tekst)
+        self.fondi_suurus = fondi_suurus
+        self.taustavärv = taustavärv
+        self.teksti_värv = teksti_värv
+        self.action = action
+        self.font = pygame.font.Font(None, self.fondi_suurus)
+        self.rect = self.get_rect()
+
+    def get_rect(self):
+        """Calculate the rectangle for collision detection."""
+        text_surface = self.font.render(self.tekst, True, self.teksti_värv)
+        return pygame.Rect(self.x - 50, self.y - 50, 100, 100)  # Adjusted for grid centering
+
+    def draw(self, surface):
+        """Draw the UI element."""
+        pygame.draw.rect(surface, self.taustavärv, self.rect, border_radius=10)  # Background rectangle
+        text_surface = self.font.render(self.tekst, True, self.teksti_värv)
+        text_rect = text_surface.get_rect(center=(self.x, self.y))
+        surface.blit(text_surface, text_rect)
+
+    def update(self, mouse_pos, mouse_up):
+        """Check for clicks and trigger action."""
+        if mouse_up and self.rect.collidepoint(mouse_pos):
+            return True  # Return True if clicked
+        return False
+
+
+# Create a 5x5 grid with numbers
+kaart = [[str(i + j * 5 + 1) for i in range(5)] for j in range(5)]
+
+# Generate UIElement objects for the grid
+grid_elements = []
+grid_x = 110  # Starting X position
+grid_y = 90   # Starting Y position
+ruudu_laius = 100  # Width of each cell
+ruudu_kõrgus = 100  # Height of each cell
+
+for rida in range(5):
+    for veerg in range(5):
+        number = kaart[rida][veerg]
+        element = UIElement(
+            asetus=(grid_x + veerg * ruudu_laius + ruudu_laius // 2, 
+                    grid_y + rida * ruudu_kõrgus + ruudu_kõrgus // 2),
+            fondi_suurus=40,
+            taustavärv=VALGE,
+            teksti_värv=MUST,
+            tekst=number
+        )
+        grid_elements.append(element)
+
+# Main loop
+while True:
+    mouse_up = False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            mouse_up = True
+
+    # Fill background
+    screen.fill(HELE_ROOSA)
+
+    # Draw each grid element and check for updates
+    for element in grid_elements:
+        if element.update(pygame.mouse.get_pos(), mouse_up):
+            element.taustavärv = TUME_ROOSA  # Change background color if clicked
+        element.draw(screen)
+
+    # Update the display
+    pygame.display.flip()
