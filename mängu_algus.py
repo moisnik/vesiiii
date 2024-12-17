@@ -88,34 +88,11 @@ class ShapeElement(Sprite):
             ]
             self.rect = self.rects[0]
 
-        elif kujund == "süda":
-            self.default_surface = self.create_süda(suurus, värv, 128, asetus[0], asetus[1])
-            self.images = [self.default_surface]
-            self.rect = self.default_surface.get_rect(center=asetus)
-
     def _create_shape_surface(self, suurus, värv):
         surface = pygame.Surface((suurus, suurus), pygame.SRCALPHA) 
         if self.kujund == "ruut":
             pygame.draw.rect(surface, värv, (0, 0, suurus, suurus),border_radius=10)
         return surface
-    
-    def create_süda(self,suurus,värv,alpha,x,y):
-        if self.kujund=="süda":
-            ikoon = pygame.Surface((suurus, suurus), pygame.SRCALPHA)
-            ikoon.fill((0, 0, 0, 0))
-            cx, cy = x,y 
-            vasak_ring = (cx - suurus // 6, cy - suurus // 8)
-            parem_ring = (cx + suurus // 6, cy - suurus // 8)
-            kolmurga_tipp = (cx, cy + suurus // 3)
-            pygame.draw.circle(ikoon, värv + (alpha,),vasak_ring, suurus // 4.75)
-            pygame.draw.circle(ikoon, värv + (alpha,), parem_ring, suurus // 4.75)
-            pygame.draw.polygon(ikoon, värv + (alpha,), [
-            (cx - suurus // 3, cy),
-            kolmurga_tipp,
-            (cx + suurus // 3, cy),
-            ])
-            
-        return ikoon
 
     @property
     def image(self):
@@ -135,6 +112,24 @@ class ShapeElement(Sprite):
    
    
 
+def create_süda(size, color, alpha,x,y):
+    icon = pygame.Surface((size, size), pygame.SRCALPHA)  # Enable alpha channel
+    südame_suurus=size/2*1.5
+    icon.fill((0, 0, 0, 0))  # Fully transparent background
+    cx, cy = südame_suurus // 2, südame_suurus // 2  # Center of the icon
+    left_circle = (cx - size // 6, cy - size // 8)
+    right_circle = (cx + size // 6, cy - size // 8)
+    bottom_tip = (cx, cy + size // 3)
+    pygame.draw.circle(icon, color + (alpha,), left_circle, size // 4.75)
+    pygame.draw.circle(icon, color + (alpha,), right_circle, size // 4.75)
+    pygame.draw.polygon(icon, color + (alpha,), [
+        (cx - size // 3, cy),
+        bottom_tip,
+        (cx + size // 3, cy),
+    ])
+    return icon,(x-cx,y-cy)
+        
+       
 
 
 def stardiekraan(screen):
@@ -231,42 +226,52 @@ def bingo_ekraan(screen):
     pealkiri=UIElement(asetus= (100, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
     kaardi_taust=(125,80,550,500)
     numbri_taust=(200,10,400,60)
-    bingokaart_numbrid=bingokaart()
+    bingo=bingokaart()
     olnud_number=None
-    kujundid=[]
+    kas_valitud=[]
+    for i in range(5):
+        valik=[]
+        for j in range(5):
+            valik.append(False)
+        kas_valitud.append(valik)
    
     while True:
         mouse_up=False
-        mouse_x,mouse_y=pygame.mouse.get_pos()
+        mouse_pos=pygame.mouse.get_pos()
 
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type==pygame.MOUSEBUTTONUP and event.button==1:
-                mouse_up=True
+                mx,my=pygame.mouse.get_pos()
+                for i in range(5):
+                        for j in range(5):
+                            x=200+j*100
+                            y=123.5+i*100
+                            ruudu_ala=pygame.Rect(x,y,40,40)
+                            if ruudu_ala.collidepoint(mx,my):
+                                    kas_valitud[i][j]=not kas_valitud[i][j]
+    
+
+
         screen.fill(hele_roosa)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
         pealkiri.draw(screen)
         pygame.draw.rect(screen, valge,numbri_taust,border_radius=20)
         y=123.5
-        for rida in bingokaart_numbrid:
+        for i in range(len(bingo)):
             x=200
-            for number in rida:
-                number=UIElement((x,y),number,35,valge,must, action=mängu_olek.number)
+            for j in range(len(bingo[i])):
+                number=UIElement((x,y),bingo[i][j],35,valge,must, action=mängu_olek.number)
                 number.draw(screen) 
                 number.update(pygame.mouse.get_pos(),mouse_up)
                 number.draw(screen)
+                if kas_valitud[i][j]==True:
+                    kujund,asukoht=create_süda(100,punane,128,x,y)
+                    screen.blit(kujund,asukoht)
                 x+=100
             y+=100
-        for kujund in kujundid:
-            kujund.draw(screen)
-        if number.action is not None:
-            x,y=pygame.mouse.get_pos()
-            kujund=ShapeElement(asetus=(x,y),kujund="süda",suurus=60,värv=punane,hover_scale=None,action=None)
-            kujund.create_süda(kujund.suurus,punane,128,x,y)
-            kujund.draw(screen)
-            kujundid.append(kujund)
 
         numbri_nupp = UIElement(asetus=(400, 40), tekst="Uus number:", fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=vaheta_number)
         numbri_nupp.draw(screen)
@@ -277,12 +282,7 @@ def bingo_ekraan(screen):
             number = UIElement(asetus=(500, 40), tekst=uus_number(set()), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
             number.draw(screen)
             olnud_number=number
-        
 
-
-        
-            
-            
         
         pygame.display.flip()
 
@@ -373,6 +373,7 @@ def main():
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
             mäng=stardiekraan(ekraan)
+        
         
         
 
