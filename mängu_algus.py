@@ -162,7 +162,7 @@ def stardiekraan(screen):
         start.draw(screen)
         pygame.display.flip()
 
-def vali_ikoon(screen):
+def vali_värv(screen):
     pealkiri=UIElement(
         asetus=(400,100),
         fondi_suurus=60,
@@ -213,7 +213,10 @@ def vali_ikoon(screen):
         return_nupp.draw(screen)
         play_action=play.update(pygame.mouse.get_pos(),mouse_up)
         if play_action is not None:
-            return play_action
+            if valitud_värv==None:
+                print("Vali enne mängu alustamist värv!")
+            else:
+                return play_action
         play.draw(screen)
         pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
         for värv in värvid:
@@ -228,10 +231,17 @@ def vali_ikoon(screen):
         pygame.display.flip()
 
 def bingo_ekraan(screen):
-    pealkiri=UIElement(asetus= (100, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
+    pealkiri=UIElement(
+        asetus= (100, 40),
+        fondi_suurus=50,
+        taustavärv=hele_roosa,
+        teksti_värv=valge,
+        tekst="BINGO!",
+        action=None)
     kaardi_taust=(125,80,550,500)
     numbri_taust=(200,10,400,60)
     bingo=bingokaart()
+    olnud_numbrid=set()
     olnud_number=None
     global valitud_värv
     kas_valitud=[]
@@ -255,7 +265,7 @@ def bingo_ekraan(screen):
                         for j in range(5):
                             x=200+j*100
                             y=123.5+i*100
-                            ruudu_ala=pygame.Rect(x,y,40,40)
+                            ruudu_ala=pygame.Rect(x,y,60,60)
                             if ruudu_ala.collidepoint(mx,my):
                                     kas_valitud[i][j]=not kas_valitud[i][j]
     
@@ -285,7 +295,7 @@ def bingo_ekraan(screen):
             olnud_number.draw(screen)
         uusnumber=numbri_nupp.update(pygame.mouse.get_pos(),mouse_up)
         if uusnumber is not None:
-            number = UIElement(asetus=(500, 40), tekst=uus_number(set()), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
+            number = UIElement(asetus=(500, 40), tekst=uus_number(olnud_numbrid), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
             number.draw(screen)
             olnud_number=number
 
@@ -301,11 +311,10 @@ def uus_number(olnud_numbrid):
     else: 
         number = random.choice(list(numbreid_alles))
         olnud_numbrid.add(number)
-        print(f'uus number on {number}')
         return str(number)
 
-def vaheta_number():
-    number = uus_number(set())
+def vaheta_number(olnud_numbrite_ennik):
+    number = uus_number(olnud_numbrite_ennik)
     return number
         
 def bingokaart():
@@ -374,7 +383,7 @@ def main():
         if mäng==mängu_olek.tiitel:
             mäng=stardiekraan(ekraan)
         if mäng==mängu_olek.start:
-            mäng=vali_ikoon(ekraan)
+            mäng=vali_värv(ekraan)
         if mäng==mängu_olek.play:
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
@@ -383,7 +392,7 @@ def main():
         
         
 
-        clock.tick(60)
+        clock.tick(65)
         
 
 
