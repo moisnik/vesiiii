@@ -77,6 +77,7 @@ class ShapeElement(Sprite):
         self.kujund = kujund 
         self.suurus = suurus
         self.värv = värv
+        self.asetus=asetus
         
         if kujund=="ruut":
             self.default_surface = self._create_shape_surface(suurus, värv)
@@ -189,11 +190,13 @@ def vali_ikoon(screen):
         )
     
     valiku_taust=(100,200,600,200)
-    värvid=[ShapeElement(asetus=(200,300),kujund="ruut",suurus=100,värv=punane,action="clicked"),
-            ShapeElement(asetus=(325,300),kujund="ruut",suurus=100,värv=sinine,action=None),
-            ShapeElement(asetus=(450,300),kujund="ruut",suurus=100,värv=roheline,action=None),
-            ShapeElement(asetus=(575,300),kujund="ruut",suurus=100,värv=tume_roosa,action=None)
+    värvid=[ShapeElement(asetus=(200,300),kujund="ruut",suurus=100,värv=punane,action="Valisid punase!"),
+            ShapeElement(asetus=(325,300),kujund="ruut",suurus=100,värv=sinine,action="Valisid sinise!"),
+            ShapeElement(asetus=(450,300),kujund="ruut",suurus=100,värv=roheline,action="Valisid rohelise!"),
+            ShapeElement(asetus=(575,300),kujund="ruut",suurus=100,värv=tume_roosa,action="Valisid roosa!")
             ]
+    global valitud_värv
+    valitud_värv=None
     while True:
         mouse_up=False
         for event in pygame.event.get():
@@ -216,11 +219,13 @@ def vali_ikoon(screen):
         for värv in värvid:
             värv.draw(screen)
             värv.update(pygame.mouse.get_pos(),mouse_up)
+            if mouse_up:
+                x,y=pygame.mouse.get_pos()
+                värvi_ala=pygame.Rect(värv.asetus[0]-50,värv.asetus[1]-50,värv.suurus*1.2,värv.suurus*1.2)
+                if värvi_ala.collidepoint(x,y):
+                    valitud_värv=värv.värv
             värv.draw(screen)
-            
-           
         pygame.display.flip()
-
 
 def bingo_ekraan(screen):
     pealkiri=UIElement(asetus= (100, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
@@ -228,6 +233,7 @@ def bingo_ekraan(screen):
     numbri_taust=(200,10,400,60)
     bingo=bingokaart()
     olnud_number=None
+    global valitud_värv
     kas_valitud=[]
     for i in range(5):
         valik=[]
@@ -268,7 +274,7 @@ def bingo_ekraan(screen):
                 number.update(pygame.mouse.get_pos(),mouse_up)
                 number.draw(screen)
                 if kas_valitud[i][j]==True:
-                    kujund,asukoht=create_süda(100,punane,128,x,y)
+                    kujund,asukoht=create_süda(100,valitud_värv,128,x,y)
                     screen.blit(kujund,asukoht)
                 x+=100
             y+=100
