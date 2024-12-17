@@ -237,13 +237,13 @@ def bingo_ekraan(screen):
    
     while True:
         mouse_up=False
-        mouse_pos=pygame.mouse.get_pos()
 
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type==pygame.MOUSEBUTTONUP and event.button==1:
+                mouse_up=True
                 mx,my=pygame.mouse.get_pos()
                 for i in range(5):
                         for j in range(5):
