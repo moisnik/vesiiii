@@ -7,18 +7,23 @@ import pygame.rect
 from enum import Enum
 import random
 
+#värvid
 hele_roosa=(245,148,148)
-tume_roosa=(238,125,125)
 hele_lilla=(204,153,255)
 tume_lilla=(178,102,255)
 valge=(255,255,255)
 must=(0,0,0)
+punane=(255,0,0)
+sinine=(0,0,225)
+roheline=(0,225,128)
+tume_roosa=(225,0,255)
 
 def loo_tekstiga_kast(tekst,fondi_suurus,taustavärv,teksti_värv):
     font=pygame.freetype.SysFont("Courier",fondi_suurus,bold=True)
     surface,_=font.render(text=tekst,fgcolor=teksti_värv,bgcolor=taustavärv)
     return surface.convert_alpha()
 
+        
 class UIElement(Sprite):
     def __init__(self, asetus, tekst, fondi_suurus,taustavärv,teksti_värv,action):
 
@@ -39,7 +44,6 @@ class UIElement(Sprite):
             highlighted_image.get_rect(center=asetus)
             ]
         self.rect=self.rects[0]
-
     @property
     def image(self):
         return self.images[1] if self.hiir_hover else self.images[0]
@@ -61,6 +65,76 @@ class mängu_olek(Enum):
     start=1
     play=2
     quit=-1
+    number=False
+    
+
+class ShapeElement(Sprite):
+    def __init__(self, asetus, kujund, suurus, värv, hover_scale=1.2, action=None):
+        super().__init__()
+        
+        self.hiir_hover = False
+        self.action = action
+        self.kujund = kujund 
+        self.suurus = suurus
+        self.värv = värv
+        
+        if kujund=="ruut":
+            self.default_surface = self._create_shape_surface(suurus, värv)
+            self.hover_surface = self._create_shape_surface(int(suurus * hover_scale), värv)
+            self.images = [self.default_surface, self.hover_surface]
+            self.rects = [
+                self.default_surface.get_rect(center=asetus),
+                self.hover_surface.get_rect(center=asetus),
+            ]
+            self.rect = self.rects[0]
+
+        elif kujund == "süda":
+            self.default_surface = self.create_süda(suurus, värv, 128, asetus[0], asetus[1])
+            self.images = [self.default_surface]
+            self.rect = self.default_surface.get_rect(center=asetus)
+
+    def _create_shape_surface(self, suurus, värv):
+        surface = pygame.Surface((suurus, suurus), pygame.SRCALPHA) 
+        if self.kujund == "ruut":
+            pygame.draw.rect(surface, värv, (0, 0, suurus, suurus),border_radius=10)
+        return surface
+    
+    def create_süda(self,suurus,värv,alpha,x,y):
+        if self.kujund=="süda":
+            ikoon = pygame.Surface((suurus, suurus), pygame.SRCALPHA)
+            ikoon.fill((0, 0, 0, 0))
+            cx, cy = x,y 
+            vasak_ring = (cx - suurus // 6, cy - suurus // 8)
+            parem_ring = (cx + suurus // 6, cy - suurus // 8)
+            kolmurga_tipp = (cx, cy + suurus // 3)
+            pygame.draw.circle(ikoon, värv + (alpha,),vasak_ring, suurus // 4.75)
+            pygame.draw.circle(ikoon, värv + (alpha,), parem_ring, suurus // 4.75)
+            pygame.draw.polygon(ikoon, värv + (alpha,), [
+            (cx - suurus // 3, cy),
+            kolmurga_tipp,
+            (cx + suurus // 3, cy),
+            ])
+            
+        return ikoon
+
+    @property
+    def image(self):
+        return self.images[1] if self.hiir_hover else self.images[0]
+
+    def update(self, mouse_pos, mouse_up):
+        self.rect = self.rects[1] if self.hiir_hover else self.rects[0]
+        if self.rect.collidepoint(mouse_pos):
+            self.hiir_hover = True
+            if mouse_up:
+                return self.action
+        else:
+            self.hiir_hover = False
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+   
+   
+
 
 
 def stardiekraan(screen):
@@ -93,6 +167,15 @@ def stardiekraan(screen):
         pygame.display.flip()
 
 def vali_ikoon(screen):
+    pealkiri=UIElement(
+        asetus=(400,100),
+        fondi_suurus=60,
+        taustavärv=hele_lilla,
+        teksti_värv=valge,
+        tekst="Vali värv!",
+        action=None
+        )
+    
     return_nupp=UIElement(
         asetus=(100,560),
         fondi_suurus=30,
@@ -109,6 +192,13 @@ def vali_ikoon(screen):
         tekst="Play",
         action=mängu_olek.play
         )
+    
+    valiku_taust=(100,200,600,200)
+    värvid=[ShapeElement(asetus=(200,300),kujund="ruut",suurus=100,värv=punane,action="clicked"),
+            ShapeElement(asetus=(325,300),kujund="ruut",suurus=100,värv=sinine,action=None),
+            ShapeElement(asetus=(450,300),kujund="ruut",suurus=100,värv=roheline,action=None),
+            ShapeElement(asetus=(575,300),kujund="ruut",suurus=100,värv=tume_roosa,action=None)
+            ]
     while True:
         mouse_up=False
         for event in pygame.event.get():
@@ -118,6 +208,7 @@ def vali_ikoon(screen):
             if event.type==pygame.MOUSEBUTTONUP and event.button==1:
                 mouse_up=True
         screen.fill(hele_lilla)
+        pealkiri.draw(screen)
         return_action=return_nupp.update(pygame.mouse.get_pos(),mouse_up)
         if return_action is not None:
             return return_action
@@ -126,36 +217,90 @@ def vali_ikoon(screen):
         if play_action is not None:
             return play_action
         play.draw(screen)
+        pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
+        for värv in värvid:
+            värv.draw(screen)
+            värv.update(pygame.mouse.get_pos(),mouse_up)
+            värv.draw(screen)
+            
+           
         pygame.display.flip()
 
 
-        
-
-
 def bingo_ekraan(screen):
-    pealkiri=UIElement(asetus= (400, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
-    kaardi_taust=(100,80,600,500)
+    pealkiri=UIElement(asetus= (100, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
+    kaardi_taust=(125,80,550,500)
+    numbri_taust=(200,10,400,60)
     bingokaart_numbrid=bingokaart()
-    
+    olnud_number=None
+    kujundid=[]
+   
     while True:
         mouse_up=False
+        mouse_x,mouse_y=pygame.mouse.get_pos()
+
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type==pygame.MOUSEBUTTONUP and event.button==1:
+                mouse_up=True
         screen.fill(hele_roosa)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
         pealkiri.draw(screen)
-        x=120
-        y=100
+        pygame.draw.rect(screen, valge,numbri_taust,border_radius=20)
+        y=123.5
         for rida in bingokaart_numbrid:
+            x=200
             for number in rida:
-                numbri_ruut=UIElement((x,y),number,40,valge,must, action=None)
-                numbri_ruut.draw(screen)
-                x+=120
+                number=UIElement((x,y),number,35,valge,must, action=mängu_olek.number)
+                number.draw(screen) 
+                number.update(pygame.mouse.get_pos(),mouse_up)
+                number.draw(screen)
+                x+=100
             y+=100
-     
+        for kujund in kujundid:
+            kujund.draw(screen)
+        if number.action is not None:
+            x,y=pygame.mouse.get_pos()
+            kujund=ShapeElement(asetus=(x,y),kujund="süda",suurus=60,värv=punane,hover_scale=None,action=None)
+            kujund.create_süda(kujund.suurus,punane,128,x,y)
+            kujund.draw(screen)
+            kujundid.append(kujund)
+
+        numbri_nupp = UIElement(asetus=(400, 40), tekst="Uus number:", fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=vaheta_number)
+        numbri_nupp.draw(screen)
+        if olnud_number is not None:
+            olnud_number.draw(screen)
+        uusnumber=numbri_nupp.update(pygame.mouse.get_pos(),mouse_up)
+        if uusnumber is not None:
+            number = UIElement(asetus=(500, 40), tekst=uus_number(set()), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
+            number.draw(screen)
+            olnud_number=number
+        
+
+
+        
+            
+            
+        
         pygame.display.flip()
+
+def uus_number(olnud_numbrid):
+    kõik_numbrid = set(range(1, 76))
+    numbreid_alles = kõik_numbrid - olnud_numbrid
+    if numbreid_alles == {}:
+        print('Numbrid on otsas!')
+        return None
+    else: 
+        number = random.choice(list(numbreid_alles))
+        olnud_numbrid.add(number)
+        print(f'uus number on {number}')
+        return str(number)
+
+def vaheta_number():
+    number = uus_number(set())
+    return number
         
 def bingokaart():
     kaart = []
@@ -228,6 +373,8 @@ def main():
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
             mäng=stardiekraan(ekraan)
+        
+        
 
         clock.tick(60)
         
