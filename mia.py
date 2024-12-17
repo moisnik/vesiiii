@@ -6,13 +6,18 @@ from pygame.sprite import Sprite
 import pygame.rect
 from enum import Enum
 import random
+import time
 
+#värvid
 hele_roosa=(245,148,148)
-tume_roosa=(238,125,125)
 hele_lilla=(204,153,255)
 tume_lilla=(178,102,255)
 valge=(255,255,255)
 must=(0,0,0)
+punane=(255,0,0)
+sinine=(0,0,225)
+roheline=(0,225,128)
+tume_roosa=(225,0,255)
 
 def loo_tekstiga_kast(tekst,fondi_suurus,taustavärv,teksti_värv):
     font=pygame.freetype.SysFont("Courier",fondi_suurus,bold=True)
@@ -39,7 +44,6 @@ class UIElement(Sprite):
             highlighted_image.get_rect(center=asetus)
             ]
         self.rect=self.rects[0]
-
     @property
     def image(self):
         return self.images[1] if self.hiir_hover else self.images[0]
@@ -56,18 +60,19 @@ class UIElement(Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
+
 class mängu_olek(Enum):
     tiitel=0
     start=1
     play=2
     quit=-1
-
-
+    number=False
+      
+   
 def stardiekraan(screen):
     start=UIElement(asetus= (400, 400), fondi_suurus=30, taustavärv=hele_roosa, teksti_värv=valge,tekst="Start",action=mängu_olek.start)
     quit=UIElement(asetus= (400, 500), fondi_suurus=30, taustavärv=hele_roosa, teksti_värv=valge,tekst="Quit",action=mängu_olek.quit)
     pealkiri=UIElement(asetus= (400, 200), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
-
 
     while True:
         mouse_up=False
@@ -92,7 +97,17 @@ def stardiekraan(screen):
         start.draw(screen)
         pygame.display.flip()
 
+
 def vali_ikoon(screen):
+    pealkiri=UIElement(
+        asetus=(400,100),
+        fondi_suurus=60,
+        taustavärv=hele_lilla,
+        teksti_värv=valge,
+        tekst="Vali värv!",
+        action=None
+        )
+    
     return_nupp=UIElement(
         asetus=(100,560),
         fondi_suurus=30,
@@ -109,6 +124,13 @@ def vali_ikoon(screen):
         tekst="Play",
         action=mängu_olek.play
         )
+    
+    valiku_taust=(100,200,600,200)
+    värvid=[ShapeElement(asetus=(200,300),kujund="ruut",suurus=100,värv=punane,action="clicked"),
+            ShapeElement(asetus=(325,300),kujund="ruut",suurus=100,värv=sinine,action=None),
+            ShapeElement(asetus=(450,300),kujund="ruut",suurus=100,värv=roheline,action=None),
+            ShapeElement(asetus=(575,300),kujund="ruut",suurus=100,värv=tume_roosa,action=None)
+            ]
     while True:
         mouse_up=False
         for event in pygame.event.get():
@@ -118,6 +140,7 @@ def vali_ikoon(screen):
             if event.type==pygame.MOUSEBUTTONUP and event.button==1:
                 mouse_up=True
         screen.fill(hele_lilla)
+        pealkiri.draw(screen)
         return_action=return_nupp.update(pygame.mouse.get_pos(),mouse_up)
         if return_action is not None:
             return return_action
@@ -126,36 +149,27 @@ def vali_ikoon(screen):
         if play_action is not None:
             return play_action
         play.draw(screen)
+        pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
+        for värv in värvid:
+            värv.draw(screen)
+            värv.update(pygame.mouse.get_pos(),mouse_up)
+            värv.draw(screen)
+             
         pygame.display.flip()
 
 
 def bingo_ekraan(screen):
     pealkiri=UIElement(asetus= (100, 40), fondi_suurus=50, taustavärv=hele_roosa, teksti_värv=valge,tekst="BINGO!",action=None)
-    kaardi_taust=(100,80,600,500)
-    numbri_taust=(200, 10, 400, 60)
-    kaart = bingokaart()
-    
-    grid_x = 110  # Starting X position
-    grid_y = 90  # Starting Y position
-    ruudu_laius = 100  # Width of each cell
-    ruudu_kõrgus = 100  # Height of each cell
-    
-    ruudud = []
-    for rida in range(5):
-        for veerg in range(5):
-            # Get the number to display
-            number = kaart[rida][veerg]
-            # Render the number
-            number_kaardil = UIElement(
-                asetus=((grid_x + veerg * ruudu_laius + ruudu_laius // 2), (grid_y + rida * ruudu_kõrgus + ruudu_kõrgus // 2)),
-                fondi_suurus=40,
-                taustavärv=valge,
-                teksti_värv=must,
-                tekst=number,
-                action=None)
-            ruudud.append(number_kaardil)
+    kaardi_taust=(125,80,550,500)
+    numbri_taust=(200,10,400,60)
+    bingokaart_numbrid=bingokaart()
+    olnud_number=None
+    olnud_numbrid=set()
+   
     while True:
         mouse_up=False
+        mouse_x,mouse_y=pygame.mouse.get_pos()
+
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
@@ -164,23 +178,36 @@ def bingo_ekraan(screen):
                 mouse_up=True
         screen.fill(hele_roosa)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
-        pygame.draw.rect(screen,valge,numbri_taust,border_radius=20)
         pealkiri.draw(screen)
-        
-        for number_kaardil in ruudud:
-            vajutati = number_kaardil.update(pygame.mouse.get_pos(), mouse_up)
-            if vajutati:
-                number_kaardil.taustavärv = tume_roosa  # Change background color if clicked
-            number_kaardil.draw(screen)
-        
+        pygame.draw.rect(screen, valge,numbri_taust,border_radius=20)
+        y=123.5
+        for rida in bingokaart_numbrid:
+            x=200
+            for number in rida:
+                number=UIElement((x,y),number,35,valge,must, action=mängu_olek.number)
+                number.draw(screen) 
+                x+=100
+            y+=100
+
         numbri_nupp = UIElement(asetus=(400, 40), tekst="Uus number:", fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=vaheta_number)
         numbri_nupp.draw(screen)
-        uusnumber=numbri_nupp.update(pygame.mouse.get_pos(),mouse_up)
-        if uusnumber is not None:
-            number = UIElement(asetus=(450, 40), tekst=uus_number(set()), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
-            number.draw(screen)
-                
+        if numbri_nupp.update(pygame.mouse.get_pos(), mouse_up):
+            uus = uus_number(olnud_numbrid)  
+            olnud_numbrid.add(uus)
+            olnud_number = UIElement(asetus=(500, 40), tekst=str(uus), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
+                       
+        if olnud_number is not None:
+            olnud_number.draw(screen)
+            for i in range(len(bingokaart_numbrid)):
+                for j in range(len(bingokaart_numbrid[i])):
+                    if str(uus) == str(bingokaart_numbrid[i][j]):
+                        bingokaart_numbrid[i][j] = 'o'
+        if kas_bingo(bingokaart_numbrid):
+            võit = UIElement(asetus=(400, 320), tekst='BINGO!', fondi_suurus=150, taustavärv=valge, teksti_värv=hele_lilla, action=None)
+            võit.draw(screen)
+            
         pygame.display.flip()
+
 
 def uus_number(olnud_numbrid):
     kõik_numbrid = set(range(1, 76))
@@ -194,8 +221,11 @@ def uus_number(olnud_numbrid):
         print(f'uus number on {number}')
         return str(number)
 
+
 def vaheta_number():
     number = uus_number(set())
+    return number
+
 
 def bingokaart():
     kaart = []
@@ -254,12 +284,22 @@ def bingokaart():
     return kaart
 
 
+def kas_bingo(kaart):
+    read = kaart
+    veerud = [[kaart[j][i] for j in range(5)] for i in range(5)] 
+    diagonaalid = [[kaart[i][i] for i in range(5)], [kaart[i][4-i] for i in range(5)]]
+    võimalused = read + veerud + diagonaalid
+    for võimalus in võimalused:
+        if len(set(võimalus)) == 1:
+            return True
+    return False        
+
+
 def main():
     pygame.init()
     mäng=mängu_olek.tiitel
     ekraan=pygame.display.set_mode((800, 600))
     clock=pygame.time.Clock()
-    olnud_numbrid = set()
     while True:
         if mäng==mängu_olek.tiitel:
             mäng=stardiekraan(ekraan)
