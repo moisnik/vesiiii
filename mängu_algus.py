@@ -237,11 +237,14 @@ def vali_värv(screen):
         play_action=play.update(pygame.mouse.get_pos(),mouse_up)
         if play_action is not None:
             if valitud_värv==None:
-                teade="Vali enne mängu alustamist värv!"
+                teade="Värv valimata!"
             else:
                 return play_action
-        if teade is not None:
+        if teade is not None and valitud_värv is None:
             pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
+            teate_tekst=loo_tekstiga_kast(tekst=teade,fondi_suurus=40,taustavärv=valge,teksti_värv=must)
+            screen.blit(teate_tekst,(240,485))
+
         play_taust.draw(screen)
         play.draw(screen)
         pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
@@ -258,6 +261,8 @@ def vali_värv(screen):
             värv.draw(screen)
         if valitud_värv is not None:
             pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
+            teate_tekst=loo_tekstiga_kast(tekst=teade,fondi_suurus=25,taustavärv=valge,teksti_värv=valitud_värv)
+            screen.blit(teate_tekst,(275,485))
         pygame.display.flip()
 
 def bingo_ekraan(screen):
