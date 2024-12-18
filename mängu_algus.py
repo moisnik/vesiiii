@@ -12,11 +12,12 @@
 # koodi mõningane eeskuju: https://www.geeksforgeeks.org/create-bingo-game-using-python/, mõjutanud kõige rohkem funktsiooni 'uus_number' ja 'kas_bingo'
 #
 # Mängu käik:
-#  Enne mängimist tuleb sisestada mängija nimi.
-#  Uue numbri genereerimiseks vajutada 'enter'.
-#  Mängija saab ise kontrollida, kas number on kaardil olemas ning seejärel vajutada uuesti 'enter', et kuvada uus seis.
-#  Kui kaardil saadakse kokku rida või veerg, tuleb mängijal kirjutada 'bingo' ning programm lõpetab töö.
-#  Muul juhul tuleb peale kaardi kuvamist vajutada uuesti 'enter'.
+#  Mängu alustamiseks vajuta avalehel 'Start'.
+#  Vali värv ning vajuta 'Play'. Värvi valimata ei saa mängu alustada
+#  Uue numbri saab vajutades 'Uus number:' nupule.
+#  Mängija saab ise kontrollida, kas number on kaardil olemas ning vastavale numbrile vajutades sellele templi panna.
+#  Kõik olnud numbrid tuleb õigeaegselt tembeldada, sest numbrid ei kordu ning tembeldamata numbritega võitu ei tule.
+#  Kui kaardil saadakse kokku rida, veerg või diagonaal, kuvatakse ekraanile 'BINGO!' ning mängija on võitnud.
 #
 ##################################################
 import pygame
@@ -40,6 +41,7 @@ roheline=(0,225,128)
 tume_roosa=(225,0,255)
 hele_sinine=(102,178,255)
 
+
 #Tekstiga surface loomine
 def loo_tekstiga_kast(tekst,fondi_suurus,taustavärv,teksti_värv):
     font=pygame.freetype.SysFont("Courier",fondi_suurus,bold=True)
@@ -50,13 +52,10 @@ def loo_tekstiga_kast(tekst,fondi_suurus,taustavärv,teksti_värv):
 #Klass User Input Elementide jaoks, mis muudavad kasutaja vajutusel midagi mängus(ekraan,värv jne)      
 class UIElement(Sprite):
     def __init__(self, asetus, tekst, fondi_suurus,taustavärv,teksti_värv,action):
-
         super().__init__()
-
         self.hiir_hover=False
         self.taustavärv = taustavärv
         self.action=action
-        
         default_image=loo_tekstiga_kast(tekst, fondi_suurus,taustavärv,teksti_värv)
         highlighted_image=loo_tekstiga_kast(tekst, fondi_suurus*1.2,taustavärv,teksti_värv)
         self.images=[
@@ -68,6 +67,7 @@ class UIElement(Sprite):
             highlighted_image.get_rect(center=(asetus[0]*0.5,asetus[1]*0.5))
             ]
         self.rect=self.rects[0]
+    
     @property
     def image(self):
         return self.images[1] if self.hiir_hover else self.images[0]
@@ -84,6 +84,7 @@ class UIElement(Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
+
 class mängu_olek(Enum):
     tiitel=0
     start=1
@@ -91,26 +92,16 @@ class mängu_olek(Enum):
     quit=-1
     number=False
 
-def ombre_taust(screen,värv1,värv2,laius,kõrgus):
-     for y in range(kõrgus):
-        factor = y / kõrgus
-        r = int(värv1[0] * (1 - factor) + värv2[0] * factor)
-        g = int(värv1[1] * (1 - factor) + värv2[1] * factor)
-        b = int(värv1[2] * (1 - factor) + värv2[2] * factor)
-        pygame.draw.line(screen, (r, g, b), (0, y), (laius, y))
 
 class KujundiElement(Sprite):
     def __init__(self, asetus, laius,kõrgus, värv, hover_scale=1.2, action=None):
-        super().__init__()
-        
+        super().__init__() 
         self.hiir_hover = False
         self.action = action
         self.laius=laius
         self.kõrgus=kõrgus
         self.värv = värv
         self.asetus=asetus
-        
-        
         self.default_surface = self._create_shape_surface(laius,kõrgus, värv)
         self.hover_surface = self._create_shape_surface(int(laius * hover_scale),int(kõrgus*hover_scale), värv)
         self.images = [self.default_surface, self.hover_surface]
@@ -137,16 +128,26 @@ class KujundiElement(Sprite):
                 return self.action
         else:
             self.hiir_hover = False
+    
     def update_nupud(self,nupp,mouse_pos):
         self.rect=self.rect=self.rects[1] if self.hiir_hover else self.rects[0]
         if nupp.rect.collidepoint(mouse_pos):
             self.hiir_hover=True
         else:
             self.hiir_hover=False
+    
     def draw(self, surface):
         surface.blit(self.image, self.rect)
-   
-   
+
+
+def ombre_taust(screen,värv1,värv2,laius,kõrgus):
+    for y in range(kõrgus):
+        factor = y / kõrgus
+        r = int(värv1[0] * (1 - factor) + värv2[0] * factor)
+        g = int(värv1[1] * (1 - factor) + värv2[1] * factor)
+        b = int(värv1[2] * (1 - factor) + värv2[2] * factor)
+        pygame.draw.line(screen, (r, g, b), (0, y), (laius, y))
+  
 
 def create_süda(suurus, värv, alpha,x,y):
     #teeb kahe ringi ja kolmnurgaga südame kujutise
@@ -166,8 +167,6 @@ def create_süda(suurus, värv, alpha,x,y):
     ])
     return süda,(x-cx,y-cy)
         
-       
-
 
 def stardiekraan(screen):
     #Start,Quit nupu ja pealkirja defineerimine
@@ -187,7 +186,6 @@ def stardiekraan(screen):
         hover_scale=1.1,
         action=None
         )
-    
     quit=UIElement(
         asetus= (400, 500),
         fondi_suurus=30, 
@@ -204,7 +202,6 @@ def stardiekraan(screen):
         hover_scale=1.1
         ,action=None
         )
-    
     pealkiri=UIElement(
         asetus= (400, 200), 
         fondi_suurus=75, 
@@ -213,7 +210,6 @@ def stardiekraan(screen):
         tekst="BINGO!",
         action=None
         )
-    
     pealkirja_taust=KujundiElement(
         asetus=(400,200),
         laius=300,
@@ -251,6 +247,7 @@ def stardiekraan(screen):
         start.draw(screen)
         pygame.display.flip()
 
+
 def vali_värv(screen):
     pealkiri=UIElement(
         asetus=(400,100),
@@ -268,7 +265,6 @@ def vali_värv(screen):
         hover_scale=1,
         action=None
         )
-    
     return_nupp=UIElement(
         asetus=(100,560),
         fondi_suurus=30,
@@ -359,6 +355,7 @@ def vali_värv(screen):
             screen.blit(teate_tekst,(275,485))
         pygame.display.flip()
 
+
 def bingo_ekraan(screen):
     pealkiri=UIElement(
         asetus= (100, 40),
@@ -384,7 +381,6 @@ def bingo_ekraan(screen):
    
     while True:
         mouse_up=False
-
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
@@ -399,8 +395,6 @@ def bingo_ekraan(screen):
                         ruudu_ala=pygame.Rect(x,y,75,75)
                         if ruudu_ala.collidepoint(mx,my):
                                 kas_valitud[i][j]=not kas_valitud[i][j]
-    
-
 
         ombre_taust(screen,hele_sinine,hele_roosa,800,600)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
@@ -440,8 +434,8 @@ def bingo_ekraan(screen):
             võit = UIElement(asetus=(400, 320), tekst='BINGO!', fondi_suurus=150, taustavärv=valge, teksti_värv=hele_lilla, action=None)
             võit.draw(screen)
 
-        
         pygame.display.flip()
+
 
 def uus_number(olnud_numbrid):
     kõik_numbrid = set(range(1, 76))
@@ -453,10 +447,12 @@ def uus_number(olnud_numbrid):
         olnud_numbrid.add(number)
         return str(number)
 
+
 def vaheta_number(olnud_numbrite_ennik):
     number = uus_number(olnud_numbrite_ennik)
     return number
-        
+
+
 def bingokaart():
     kaart = []
     olnud_numbrid = set()
@@ -513,6 +509,7 @@ def bingokaart():
         kaart.append(rea_numbrid)
     return kaart
 
+
 def kas_bingo(kaart):
     read = kaart
     veerud = [[kaart[j][i] for j in range(5)] for i in range(5)] 
@@ -523,6 +520,7 @@ def kas_bingo(kaart):
             return True
     return False       
  
+
 def main():
     pygame.init()
     mäng=mängu_olek.tiitel
@@ -537,9 +535,6 @@ def main():
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
             mäng=stardiekraan(ekraan)
-        
-        
-        
 
         clock.tick(65)
         
