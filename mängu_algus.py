@@ -214,6 +214,8 @@ def vali_värv(screen):
             KujundiElement(asetus=(450,300),laius=100,kõrgus=100,värv=roheline,action="Valisid rohelise!"),
             KujundiElement(asetus=(575,300),laius=100,kõrgus=100,värv=tume_roosa,action="Valisid roosa!")
             ]
+    teade=None
+    teate_taust=(200,450,400,100)
     global valitud_värv
     valitud_värv=None
     while True:
@@ -235,9 +237,11 @@ def vali_värv(screen):
         play_action=play.update(pygame.mouse.get_pos(),mouse_up)
         if play_action is not None:
             if valitud_värv==None:
-                print("Vali enne mängu alustamist värv!")
+                teade="Vali enne mängu alustamist värv!"
             else:
                 return play_action
+        if teade is not None:
+            pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
         play_taust.draw(screen)
         play.draw(screen)
         pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
@@ -250,7 +254,10 @@ def vali_värv(screen):
                 värvi_ala=pygame.Rect(värv.asetus[0]-50,värv.asetus[1]-50,värv.laius*1.2,värv.kõrgus*1.2)
                 if värvi_ala.collidepoint(x,y):
                         valitud_värv=värv.värv
+                        teade=värv.action
             värv.draw(screen)
+        if valitud_värv is not None:
+            pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
         pygame.display.flip()
 
 def bingo_ekraan(screen):
@@ -274,7 +281,7 @@ def bingo_ekraan(screen):
         for j in range(5):
             valik.append(False)
         kas_valitud.append(valik)
-   
+
     while True:
         mouse_up=False
 
@@ -292,8 +299,7 @@ def bingo_ekraan(screen):
                         ruudu_ala=pygame.Rect(x,y,75,75)
                         if ruudu_ala.collidepoint(mx,my):
                                 kas_valitud[i][j]=not kas_valitud[i][j]
-    
-
+                                
 
         ombre_taust(screen,hele_sinine,hele_roosa,800,600)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
@@ -323,6 +329,11 @@ def bingo_ekraan(screen):
             number = UIElement(asetus=(500, 40), tekst=uus_number(olnud_numbrid), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
             number.draw(screen)
             olnud_number=number
+        võidud=kas_võit(olnud_numbrid,kas_valitud,bingo)
+        if võidud==True:
+            olnud_bingod+=1
+            print("BINGO!")
+            
 
         
         pygame.display.flip()
@@ -407,6 +418,51 @@ def kas_bingo(kaart):
             return True
     return False       
  
+def kas_võit(olnud_numbrid,kas_valitud,bingo_kaart): 
+    #kontrollib kas olnud numbritega on mõni võit ja kas need numbrid on ka kaardil kasutaja poolt märgitud
+    #Kõik numbrid
+    võit=0
+    numbrid_kaardil=0
+    for i in range(len(bingo_kaart)):
+        for j in range(len(bingo_kaart[i])):
+            number=bingo_kaart[i][j]
+            if number in olnud_numbrid and kas_valitud[i][j]==True:
+                numbrid_kaardil+=1
+            if i==3 and j==3 and kas_valitud[i][j]==True:
+                numbrid_kaardil+=1
+    if numbrid_kaardil==25:
+        return True    
+    #Diagonaalid
+    diagonaal1=0
+    diagonaal2=0
+    for i in range(len(bingo_kaart)):
+        if bingo_kaart[i][i] in olnud_numbrid and kas_valitud[i][i]==True:
+            diagonaal1+=1
+        if bingo_kaart[i][4-i] in olnud_numbrid and kas_valitud[i][4-i]==True:
+            diagonaal2+=1
+        if i==3 and kas_valitud[i][i]==True:
+            diagonaal1+=1
+            diagonaal2+=1
+            
+    if diagonaal1==5:
+        return True
+    if diagonaal2==5:
+        return True
+
+    #Veerud
+    for i in range(5):
+        veerud=0
+        for j in range(5):
+            if bingo_kaart[j][i] in olnud_numbrid and kas_valitud[j][i]==True:
+                veerud+=1
+            if i==3 and j==3 and kas_valitud[j][i]==True:
+                veerud+=1
+        if veerud==5:
+            return True
+    return False
+                
+
+            
 def main():
     pygame.init()
     mäng=mängu_olek.tiitel
@@ -421,8 +477,6 @@ def main():
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
             mäng=stardiekraan(ekraan)
-        
-        
         
 
         clock.tick(65)
