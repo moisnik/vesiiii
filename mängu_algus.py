@@ -1,13 +1,32 @@
-#https://www.youtube.com/watch?v=AY9MnQ4x3zk&t=306s
+################################################
+# Programmeerimine I
+# 2024/2025 sügissemester
+#
+# Projekt
+# Teema: Bingomäng
+#
+#
+# Autorid: Mia Mõisnik, Elo Liisbet Palmsaar
+#
+# mõningane eeskuju: klassikaline numbrite jaotus vastavalt 75-pallise bingo reeglitele, 
+# koodi mõningane eeskuju: https://www.geeksforgeeks.org/create-bingo-game-using-python/, mõjutanud kõige rohkem funktsiooni 'uus_number' ja 'kas_bingo'
+#
+# Mängu käik:
+#  Enne mängimist tuleb sisestada mängija nimi.
+#  Uue numbri genereerimiseks vajutada 'enter'.
+#  Mängija saab ise kontrollida, kas number on kaardil olemas ning seejärel vajutada uuesti 'enter', et kuvada uus seis.
+#  Kui kaardil saadakse kokku rida või veerg, tuleb mängijal kirjutada 'bingo' ning programm lõpetab töö.
+#  Muul juhul tuleb peale kaardi kuvamist vajutada uuesti 'enter'.
+#
+##################################################
 import pygame
 import sys
 import pygame.freetype
 from pygame.sprite import Sprite
 import pygame.rect
-import copy
 from enum import Enum
 import random
- 
+
 #värvid
 hele_roosa=(245,148,148)
 hele_lilla=(204,153,255)
@@ -215,8 +234,6 @@ def vali_värv(screen):
             KujundiElement(asetus=(450,300),laius=100,kõrgus=100,värv=roheline,action="Valisid rohelise!"),
             KujundiElement(asetus=(575,300),laius=100,kõrgus=100,värv=tume_roosa,action="Valisid roosa!")
             ]
-    teade=None
-    teate_taust=(200,450,400,100)
     global valitud_värv
     valitud_värv=None
     while True:
@@ -238,14 +255,9 @@ def vali_värv(screen):
         play_action=play.update(pygame.mouse.get_pos(),mouse_up)
         if play_action is not None:
             if valitud_värv==None:
-                teade="Värv valimata!"
+                print("Vali enne mängu alustamist värv!")
             else:
                 return play_action
-        if teade is not None and valitud_värv is None:
-            pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
-            teate_tekst=loo_tekstiga_kast(tekst=teade,fondi_suurus=40,taustavärv=valge,teksti_värv=must)
-            screen.blit(teate_tekst,(240,485))
-
         play_taust.draw(screen)
         play.draw(screen)
         pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
@@ -258,12 +270,7 @@ def vali_värv(screen):
                 värvi_ala=pygame.Rect(värv.asetus[0]-50,värv.asetus[1]-50,värv.laius*1.2,värv.kõrgus*1.2)
                 if värvi_ala.collidepoint(x,y):
                         valitud_värv=värv.värv
-                        teade=värv.action
             värv.draw(screen)
-        if valitud_värv is not None:
-            pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
-            teate_tekst=loo_tekstiga_kast(tekst=teade,fondi_suurus=25,taustavärv=valge,teksti_värv=valitud_värv)
-            screen.blit(teate_tekst,(275,485))
         pygame.display.flip()
 
 def bingo_ekraan(screen):
@@ -278,7 +285,6 @@ def bingo_ekraan(screen):
     kaardi_taust=(125,80,550,500)
     numbri_taust=(200,10,400,60)
     bingo=bingokaart()
-    kontroll=copy.deepcopy(bingo)
     olnud_numbrid=set()
     olnud_number=None
     global valitud_värv
@@ -288,7 +294,7 @@ def bingo_ekraan(screen):
         for j in range(5):
             valik.append(False)
         kas_valitud.append(valik)
-
+   
     while True:
         mouse_up=False
 
@@ -306,7 +312,8 @@ def bingo_ekraan(screen):
                         ruudu_ala=pygame.Rect(x,y,75,75)
                         if ruudu_ala.collidepoint(mx,my):
                                 kas_valitud[i][j]=not kas_valitud[i][j]
-                                
+    
+
 
         ombre_taust(screen,hele_sinine,hele_roosa,800,600)
         pygame.draw.rect(screen,valge,kaardi_taust,border_radius=20)
@@ -331,21 +338,11 @@ def bingo_ekraan(screen):
         numbri_nupp.draw(screen)
         if olnud_number is not None:
             olnud_number.draw(screen)
-            for i in range(len(kontroll)):
-                for j in range(len(kontroll[i])):
-                    if str(uus) == str(kontroll[i][j]) and kas_valitud[i][j]==True:
-                        kontroll[i][j] = 'o'
         uusnumber=numbri_nupp.update(pygame.mouse.get_pos(),mouse_up)
         if uusnumber is not None:
-            uus=uus_number(olnud_numbrid)
-            olnud_number = UIElement(asetus=(500, 40), tekst=str(uus), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
-            olnud_numbrid.add(uus)           
+            number = UIElement(asetus=(500, 40), tekst=uus_number(olnud_numbrid), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
             number.draw(screen)
-            
-        if kas_bingo(kontroll):
-            võit = UIElement(asetus=(400, 320), tekst='BINGO!', fondi_suurus=150, taustavärv=valge, teksti_värv=hele_lilla, action=None)
-            võit.draw(screen)
-            
+            olnud_number=number
 
         
         pygame.display.flip()
@@ -430,10 +427,6 @@ def kas_bingo(kaart):
             return True
     return False       
  
-
-                
-
-            
 def main():
     pygame.init()
     mäng=mängu_olek.tiitel
@@ -448,6 +441,8 @@ def main():
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
             mäng=stardiekraan(ekraan)
+        
+        
         
 
         clock.tick(65)
