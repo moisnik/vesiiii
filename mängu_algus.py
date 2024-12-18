@@ -2,8 +2,8 @@
 import pygame
 import sys
 import pygame.freetype
-from pygame.sprite import Sprite
 import pygame.rect
+from pygame.sprite import Sprite
 import copy
 from enum import Enum
 import random
@@ -20,12 +20,14 @@ roheline=(0,225,128)
 tume_roosa=(225,0,255)
 hele_sinine=(102,178,255)
 
+#Tekstiga surface loomine
 def loo_tekstiga_kast(tekst,fondi_suurus,taustavärv,teksti_värv):
     font=pygame.freetype.SysFont("Courier",fondi_suurus,bold=True)
     surface,_=font.render(text=tekst,fgcolor=teksti_värv,bgcolor=taustavärv)
     return surface.convert_alpha()
 
-        
+
+#Klass User Input Elementide jaoks, mis muudavad kasutaja vajutusel midagi mängus(ekraan,värv jne)      
 class UIElement(Sprite):
     def __init__(self, asetus, tekst, fondi_suurus,taustavärv,teksti_värv,action):
 
@@ -43,7 +45,7 @@ class UIElement(Sprite):
             ]
         self.rects=[
             default_image.get_rect(center=asetus),
-            highlighted_image.get_rect(center=asetus)
+            highlighted_image.get_rect(center=(asetus[0]*0.5,asetus[1]*0.5))
             ]
         self.rect=self.rects[0]
     @property
@@ -71,15 +73,11 @@ class mängu_olek(Enum):
 
 def ombre_taust(screen,värv1,värv2,laius,kõrgus):
      for y in range(kõrgus):
-        # Calculate the interpolation factor
         factor = y / kõrgus
-        # Interpolate color for the current row
         r = int(värv1[0] * (1 - factor) + värv2[0] * factor)
         g = int(värv1[1] * (1 - factor) + värv2[1] * factor)
         b = int(värv1[2] * (1 - factor) + värv2[2] * factor)
-        # Draw a line for the current row
         pygame.draw.line(screen, (r, g, b), (0, y), (laius, y))
-
 
 class KujundiElement(Sprite):
     def __init__(self, asetus, laius,kõrgus, värv, hover_scale=1.2, action=None):
@@ -119,40 +117,91 @@ class KujundiElement(Sprite):
                 return self.action
         else:
             self.hiir_hover = False
-    def update_nupud(self,nupp):
-        self.rect=self.rects[1] if nupp.hiir_hover else self.rects[0]
+    def update_nupud(self,nupp,mouse_pos):
+        self.rect=self.rect=self.rects[1] if self.hiir_hover else self.rects[0]
+        if nupp.rect.collidepoint(mouse_pos):
+            self.hiir_hover=True
+        else:
+            self.hiir_hover=False
     def draw(self, surface):
         surface.blit(self.image, self.rect)
    
    
 
-def create_süda(size, color, alpha,x,y):
-    icon = pygame.Surface((size, size), pygame.SRCALPHA)  # Enable alpha channel
-    südame_suurus=size/2*1.5
-    icon.fill((0, 0, 0, 0))  # Fully transparent background
-    cx, cy = südame_suurus // 2, südame_suurus // 2  # Center of the icon
-    left_circle = (cx - size // 6, cy - size // 8)
-    right_circle = (cx + size // 6, cy - size // 8)
-    bottom_tip = (cx, cy + size // 3)
-    pygame.draw.circle(icon, color + (alpha,), left_circle, size // 4.75)
-    pygame.draw.circle(icon, color + (alpha,), right_circle, size // 4.75)
-    pygame.draw.polygon(icon, color + (alpha,), [
-        (cx - size // 3, cy),
-        bottom_tip,
-        (cx + size // 3, cy),
+def create_süda(suurus, värv, alpha,x,y):
+    #teeb kahe ringi ja kolmnurgaga südame kujutise
+    süda = pygame.Surface((suurus, suurus), pygame.SRCALPHA)  # lisab värvila alpha, mis määrab selle opacity
+    südame_suurus=suurus/2*1.5
+    süda.fill((0, 0, 0, 0)) 
+    cx, cy = südame_suurus // 2, südame_suurus // 2 #südame keskpunkt
+    vasak_ring = (cx - suurus // 6, cy - suurus // 8)
+    parem_ring = (cx + suurus // 6, cy - suurus // 8)
+    kolmnurga_tipp = (cx, cy + suurus // 3)
+    pygame.draw.circle(süda, värv + (alpha,), vasak_ring, suurus // 4.75)
+    pygame.draw.circle(süda, värv + (alpha,), parem_ring, suurus // 4.75)
+    pygame.draw.polygon(süda, värv + (alpha,), [
+        (cx - suurus // 3, cy),
+        kolmnurga_tipp,
+        (cx + suurus // 3, cy),
     ])
-    return icon,(x-cx,y-cy)
+    return süda,(x-cx,y-cy)
         
        
 
 
 def stardiekraan(screen):
-    start=UIElement(asetus= (400, 400), fondi_suurus=30, taustavärv=valge, teksti_värv=must,tekst="Start",action=mängu_olek.start)
-    quit=UIElement(asetus= (400, 500), fondi_suurus=30, taustavärv=valge, teksti_värv=must,tekst="Quit",action=mängu_olek.quit)
-    pealkiri=UIElement(asetus= (400, 200), fondi_suurus=75, taustavärv=valge, teksti_värv=must,tekst="BINGO!",action=None)
-    start_taust=KujundiElement(asetus=(400,400),laius=200,kõrgus=75,värv=valge,hover_scale=1,action=None)
-    quit_taust=KujundiElement(asetus=(400,500),laius=200,kõrgus=75,värv=valge,hover_scale=1,action=None)
-    pealkirja_taust=KujundiElement(asetus=(400,200),laius=300,kõrgus=100,värv=valge,hover_scale=1,action=None)
+    #Start,Quit nupu ja pealkirja defineerimine
+    start=UIElement(
+        asetus= (400, 400), 
+        fondi_suurus=30,
+        taustavärv=valge,
+        teksti_värv=must,
+        tekst="Start",
+        action=mängu_olek.start
+        )
+    start_taust=KujundiElement(
+        asetus=(400,400),
+        laius=200,
+        kõrgus=75,
+        värv=valge,
+        hover_scale=1.1,
+        action=None
+        )
+    
+    quit=UIElement(
+        asetus= (400, 500),
+        fondi_suurus=30, 
+        taustavärv=valge,
+        teksti_värv=must,
+        tekst="Quit",
+        action=mängu_olek.quit
+        )
+    quit_taust=KujundiElement(
+        asetus=(400,500),
+        laius=200,
+        kõrgus=75,
+        värv=valge,
+        hover_scale=1.1
+        ,action=None
+        )
+    
+    pealkiri=UIElement(
+        asetus= (400, 200), 
+        fondi_suurus=75, 
+        taustavärv=valge, 
+        teksti_värv=must,
+        tekst="BINGO!",
+        action=None
+        )
+    
+    pealkirja_taust=KujundiElement(
+        asetus=(400,200),
+        laius=300,
+        kõrgus=100,
+        värv=valge,
+        hover_scale=1,
+        action=None
+        )
 
     while True:
         mouse_up=False
@@ -167,16 +216,17 @@ def stardiekraan(screen):
         pealkirja_taust.draw(screen)
         pealkiri.draw(screen)
         quit_action=quit.update(pygame.mouse.get_pos(),mouse_up)
-
         if quit_action==mängu_olek.quit:
             pygame.quit()
             sys.exit()
+        quit_taust.update_nupud(quit,pygame.mouse.get_pos())
         quit_taust.draw(screen)
         quit.draw(screen)
         start_taust.draw(screen)
         start_action=start.update(pygame.mouse.get_pos(),mouse_up)
         if start_action==mängu_olek.start:
             return start_action
+        start_taust.update_nupud(start,pygame.mouse.get_pos())
         start_taust.draw(screen)
         start.draw(screen)
         pygame.display.flip()
@@ -190,7 +240,15 @@ def vali_värv(screen):
         tekst="Vali värv!",
         action=None
         )
-    pealkirja_taust=KujundiElement(asetus=(400,100),laius=500,kõrgus=100,värv=valge,hover_scale=1,action=None)
+    pealkirja_taust=KujundiElement(
+        asetus=(400,100),
+        laius=500,
+        kõrgus=100,
+        värv=valge,
+        hover_scale=1,
+        action=None
+        )
+    
     return_nupp=UIElement(
         asetus=(100,560),
         fondi_suurus=30,
@@ -199,7 +257,14 @@ def vali_värv(screen):
         tekst="Return",
         action=mängu_olek.tiitel
         )
-    return_taust=KujundiElement(asetus=(100,560),laius=175,kõrgus=50,värv=valge,hover_scale=1,action=None)
+    return_taust=KujundiElement(
+        asetus=(100,560),
+        laius=175,
+        kõrgus=50,
+        värv=valge,
+        hover_scale=1.1,
+        action=None
+        )
     play=UIElement(
         asetus=(700,560),
         fondi_suurus=30,
@@ -208,7 +273,14 @@ def vali_värv(screen):
         tekst="Play",
         action=mängu_olek.play
         )
-    play_taust=KujundiElement(asetus=(700,560),laius=150,kõrgus=50,värv=valge,hover_scale=1,action=None)
+    play_taust=KujundiElement(
+        asetus=(700,560),
+        laius=150,
+        kõrgus=50,
+        värv=valge,
+        hover_scale=1.1,
+        action=None
+        )
     valiku_taust=(100,200,600,200)
     värvid=[KujundiElement(asetus=(200,300),laius=100,kõrgus=100,värv=punane,action="Valisid punase!"),
             KujundiElement(asetus=(325,300),laius=100,kõrgus=100,värv=sinine,action="Valisid sinise!"),
@@ -233,6 +305,7 @@ def vali_värv(screen):
         return_action=return_nupp.update(pygame.mouse.get_pos(),mouse_up)
         if return_action is not None:
             return return_action
+        return_taust.update_nupud(return_nupp,pygame.mouse.get_pos())
         return_taust.draw(screen)
         return_nupp.draw(screen)
         play_action=play.update(pygame.mouse.get_pos(),mouse_up)
@@ -245,7 +318,7 @@ def vali_värv(screen):
             pygame.draw.rect(screen,valge,teate_taust,border_radius=20)
             teate_tekst=loo_tekstiga_kast(tekst=teade,fondi_suurus=40,taustavärv=valge,teksti_värv=must)
             screen.blit(teate_tekst,(240,485))
-
+        play_taust.update_nupud(play,pygame.mouse.get_pos())
         play_taust.draw(screen)
         play.draw(screen)
         pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
