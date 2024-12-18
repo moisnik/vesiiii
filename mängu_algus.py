@@ -6,7 +6,7 @@ from pygame.sprite import Sprite
 import pygame.rect
 from enum import Enum
 import random
-
+ 
 #värvid
 hele_roosa=(245,148,148)
 hele_lilla=(204,153,255)

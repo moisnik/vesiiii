@@ -7,6 +7,7 @@ import pygame.rect
 from enum import Enum
 import random
 import time
+import copy
 
 #värvid
 hele_roosa=(245,148,148)
@@ -23,6 +24,7 @@ def loo_tekstiga_kast(tekst,fondi_suurus,taustavärv,teksti_värv):
     font=pygame.freetype.SysFont("Courier",fondi_suurus,bold=True)
     surface,_=font.render(text=tekst,fgcolor=teksti_värv,bgcolor=taustavärv)
     return surface.convert_alpha()
+
 
 class UIElement(Sprite):
     def __init__(self, asetus, tekst, fondi_suurus,taustavärv,teksti_värv,action):
@@ -98,64 +100,6 @@ def stardiekraan(screen):
         pygame.display.flip()
 
 
-def vali_ikoon(screen):
-    pealkiri=UIElement(
-        asetus=(400,100),
-        fondi_suurus=60,
-        taustavärv=hele_lilla,
-        teksti_värv=valge,
-        tekst="Vali värv!",
-        action=None
-        )
-    
-    return_nupp=UIElement(
-        asetus=(100,560),
-        fondi_suurus=30,
-        taustavärv=hele_lilla,
-        teksti_värv=valge,
-        tekst="Return",
-        action=mängu_olek.tiitel
-        )
-    
-    play=UIElement(
-        asetus=(700,560),
-        fondi_suurus=30,taustavärv=hele_lilla,
-        teksti_värv=valge,
-        tekst="Play",
-        action=mängu_olek.play
-        )
-    
-    valiku_taust=(100,200,600,200)
-    värvid=[ShapeElement(asetus=(200,300),kujund="ruut",suurus=100,värv=punane,action="clicked"),
-            ShapeElement(asetus=(325,300),kujund="ruut",suurus=100,värv=sinine,action=None),
-            ShapeElement(asetus=(450,300),kujund="ruut",suurus=100,värv=roheline,action=None),
-            ShapeElement(asetus=(575,300),kujund="ruut",suurus=100,värv=tume_roosa,action=None)
-            ]
-    while True:
-        mouse_up=False
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type==pygame.MOUSEBUTTONUP and event.button==1:
-                mouse_up=True
-        screen.fill(hele_lilla)
-        pealkiri.draw(screen)
-        return_action=return_nupp.update(pygame.mouse.get_pos(),mouse_up)
-        if return_action is not None:
-            return return_action
-        return_nupp.draw(screen)
-        play_action=play.update(pygame.mouse.get_pos(),mouse_up)
-        if play_action is not None:
-            return play_action
-        play.draw(screen)
-        pygame.draw.rect(screen,valge,valiku_taust,border_radius=20) 
-        for värv in värvid:
-            värv.draw(screen)
-            värv.update(pygame.mouse.get_pos(),mouse_up)
-            värv.draw(screen)
-             
-        pygame.display.flip()
 
 
 def bingo_ekraan(screen):
@@ -163,6 +107,7 @@ def bingo_ekraan(screen):
     kaardi_taust=(125,80,550,500)
     numbri_taust=(200,10,400,60)
     bingokaart_numbrid=bingokaart()
+    kontroll = copy.deepcopy(bingokaart_numbrid)
     olnud_number=None
     olnud_numbrid=set()
    
@@ -198,11 +143,11 @@ def bingo_ekraan(screen):
                        
         if olnud_number is not None:
             olnud_number.draw(screen)
-            for i in range(len(bingokaart_numbrid)):
-                for j in range(len(bingokaart_numbrid[i])):
-                    if str(uus) == str(bingokaart_numbrid[i][j]):
-                        bingokaart_numbrid[i][j] = 'o'
-        if kas_bingo(bingokaart_numbrid):
+            for i in range(len(kontroll)):
+                for j in range(len(kontroll[i])):
+                    if str(uus) == str(kontroll[i][j]):
+                        kontroll[i][j] = 'o'
+        if kas_bingo(kontroll):
             võit = UIElement(asetus=(400, 320), tekst='BINGO!', fondi_suurus=150, taustavärv=valge, teksti_värv=hele_lilla, action=None)
             võit.draw(screen)
             
@@ -304,8 +249,6 @@ def main():
         if mäng==mängu_olek.tiitel:
             mäng=stardiekraan(ekraan)
         if mäng==mängu_olek.start:
-            mäng=vali_ikoon(ekraan)
-        if mäng==mängu_olek.play:
             mäng==bingo_ekraan(ekraan)
         if mäng==mängu_olek.quit:
             mäng=stardiekraan(ekraan)
