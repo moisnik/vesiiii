@@ -4,6 +4,7 @@ import sys
 import pygame.freetype
 from pygame.sprite import Sprite
 import pygame.rect
+import copy
 from enum import Enum
 import random
  
@@ -277,6 +278,7 @@ def bingo_ekraan(screen):
     kaardi_taust=(125,80,550,500)
     numbri_taust=(200,10,400,60)
     bingo=bingokaart()
+    kontroll=copy.deepcopy(bingo)
     olnud_numbrid=set()
     olnud_number=None
     global valitud_värv
@@ -329,15 +331,20 @@ def bingo_ekraan(screen):
         numbri_nupp.draw(screen)
         if olnud_number is not None:
             olnud_number.draw(screen)
+            for i in range(len(kontroll)):
+                for j in range(len(kontroll[i])):
+                    if str(uus) == str(kontroll[i][j]) and kas_valitud[i][j]==True:
+                        kontroll[i][j] = 'o'
         uusnumber=numbri_nupp.update(pygame.mouse.get_pos(),mouse_up)
         if uusnumber is not None:
-            number = UIElement(asetus=(500, 40), tekst=uus_number(olnud_numbrid), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
+            uus=uus_number(olnud_numbrid)
+            olnud_number = UIElement(asetus=(500, 40), tekst=str(uus), fondi_suurus=20, taustavärv=valge, teksti_värv=hele_roosa, action=None)
+            olnud_numbrid.add(uus)           
             number.draw(screen)
-            olnud_number=number
-        võidud=kas_võit(olnud_numbrid,kas_valitud,bingo)
-        if võidud==True:
-            olnud_bingod+=1
-            print("BINGO!")
+            
+        if kas_bingo(kontroll):
+            võit = UIElement(asetus=(400, 320), tekst='BINGO!', fondi_suurus=150, taustavärv=valge, teksti_värv=hele_lilla, action=None)
+            võit.draw(screen)
             
 
         
@@ -423,48 +430,7 @@ def kas_bingo(kaart):
             return True
     return False       
  
-def kas_võit(olnud_numbrid,kas_valitud,bingo_kaart): 
-    #kontrollib kas olnud numbritega on mõni võit ja kas need numbrid on ka kaardil kasutaja poolt märgitud
-    #Kõik numbrid
-    võit=0
-    numbrid_kaardil=0
-    for i in range(len(bingo_kaart)):
-        for j in range(len(bingo_kaart[i])):
-            number=bingo_kaart[i][j]
-            if number in olnud_numbrid and kas_valitud[i][j]==True:
-                numbrid_kaardil+=1
-            if i==3 and j==3 and kas_valitud[i][j]==True:
-                numbrid_kaardil+=1
-    if numbrid_kaardil==25:
-        return True    
-    #Diagonaalid
-    diagonaal1=0
-    diagonaal2=0
-    for i in range(len(bingo_kaart)):
-        if bingo_kaart[i][i] in olnud_numbrid and kas_valitud[i][i]==True:
-            diagonaal1+=1
-        if bingo_kaart[i][4-i] in olnud_numbrid and kas_valitud[i][4-i]==True:
-            diagonaal2+=1
-        if i==3 and kas_valitud[i][i]==True:
-            diagonaal1+=1
-            diagonaal2+=1
-            
-    if diagonaal1==5:
-        return True
-    if diagonaal2==5:
-        return True
 
-    #Veerud
-    for i in range(5):
-        veerud=0
-        for j in range(5):
-            if bingo_kaart[j][i] in olnud_numbrid and kas_valitud[j][i]==True:
-                veerud+=1
-            if i==3 and j==3 and kas_valitud[j][i]==True:
-                veerud+=1
-        if veerud==5:
-            return True
-    return False
                 
 
             
